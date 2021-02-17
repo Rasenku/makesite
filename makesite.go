@@ -1,37 +1,59 @@
 package main
 
 import (
-	"fmt"
 	"html/template"
 	"io/ioutil"
+	"os"
+	"strings"
+
 )
 
-type FileCont struct {
-	Title   string
-	Content string
+type content struct {
+	Description string
 }
 
-func save() {
-	// 1. Read in the contents of the provided first-post.txt file.
-	fileContents, err := ioutil.ReadFile("first-post.txt")
+func readFile(name string) string {
+	fileContents, err := ioutil.ReadFile(name)
+	if err != nil {
+		panic(err)
+	}
+	return string(fileContents)
 
-	// 3. Render the contents of first-post.txt using Go Templates and print it to stdout.
-	fmt.Println(string(fileContents))
+}
+func writeTemplateToFile(lang string, templateName string, fileName string) {
+	/*
+			Creates new template with the filename given
+	*/
+
+	c := content{Description: readFile(fileName)}
+	t := template.Must(template.New("template.tmpl").ParseFiles(templateName))
+
+	filter := filterInput(fileName) //option 1
+	// f, err := os.Create(arg[:len(arg)-4] + ".html") //option 2
+	f, err := os.Create(filter)
 	if err != nil {
 		panic(err)
 	}
 
-	content := FileCont{
-		Title:   "first-post-w",
-		Content: string(fileContents),
+	err = t.Execute(f, c)
+	if err != nil {
+		panic(err)
 	}
-	t := template.Must(template.ParseFiles("template.tmpl"))
+}
 
-	// 4. Write the HTML template to the filesystem to a file. Name it first-post.html
-	t.Execute(file, content)
 
+
+func filterInput(input string) string {
+	/*
+		Makesite v1.1
+			Traverse through input until you reach '.', then add '.html' to the end.
+			return s
+	*/
+	ext := ".html"
+	s := strings.Split(input, ".")[0] + ext
+	return s
 }
 
 func main() {
-	save()
+	// arg := os.Args[1] // Makesite MVP
 }
