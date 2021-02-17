@@ -5,6 +5,9 @@ import (
 	"io/ioutil"
 	"os"
 	"strings"
+	"flag"
+	"fmt"
+	"log"
 
 )
 
@@ -43,9 +46,80 @@ func writeTemplateToFile(lang string, templateName string, fileName string) {
 
 
 
+func writeTranslate(filename string, lang string) {
+	/*
+			Reads/translates the .txt files, writes them into a template file
+	*/
+	FileText := readFile(filename)
+
+	contents, error := translateText(lang, FileText)
+	if error != nil {
+		panic(error)
+	}
+	bytesToWrite := []byte(contents)
+
+	err := ioutil.WriteFile(filename, bytesToWrite, 0644)
+	if err != nil {
+		panic(err)
+	}
+}
+
+func parser() {
+	/*
+			Collects files in given directory,
+			checks if file includes '.txt',
+			creates a '.html' file for the .txt files
+	*/
+	/* type, -dir=[name of directory you want to scan], to search for all .txt files you want to convert into a template.
+	Default = current directory */
+	var dir string
+	flag.StringVar(&dir, "dir", ".", "This is the directory.")
+
+	// type, -lang=[google language abbreviation], to choose translation. Default = espanol
+	var lang string
+	flag.StringVar(&lang, "lang", "es", "This is the language you want to translate, inputting google's language abbreviations.")
+	flag.Parse()
+
+	fmt.Println("Directory:", dir)
+	fmt.Println("Language:", lang)
+
+	files, err := ioutil.ReadDir(dir)
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	for _, file := range files {
+		if filenameCheck(file.Name()) == true {
+			fmt.Println(file.Name())
+			writeTranslate(file.Name(), lang)                       // Google translate function
+			writeTemplateToFile(lang, "template.tmpl", file.Name()) // writes file contents into newly-created template
+		}
+	}
+}
+
+func filenameCheck(filename string) bool {
+	/*
+			checks if filename includes .txt,
+			if so, returns True
+			else, returns false
+	*/
+	tail := "txt"
+	for i := range filename {
+		if filename[i] == '.' {
+			s := strings.Split(filename, ".")[1]
+			// fmt.Println(s)
+			if s == tail {
+				return true
+			}
+		}
+	}
+	return false
+}
+
+
 func filterInput(input string) string {
 	/*
-		Makesite v1.1
 			Traverse through input until you reach '.', then add '.html' to the end.
 			return s
 	*/
@@ -56,4 +130,8 @@ func filterInput(input string) string {
 
 func main() {
 	// arg := os.Args[1] // Makesite MVP
+
+	parser() //Makesite v1.1 + v1.2
+	// renderTemplate("template.tmpl", readFile(arg))
+	// writeTemplateToFile("template.tmpl", arg)
 }
